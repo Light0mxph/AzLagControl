@@ -1,7 +1,7 @@
 name: AzLagControl
 version: '${version}'
 main: dev.azlagcontrol.AzLagControl
-api-version: '1.20'
+api-version: '1.21'
 description: '${description}'
 authors:
   - AztrixDigitalStudio

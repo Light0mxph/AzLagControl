@@ -9,10 +9,11 @@ description = "AzLagControl - Professional lag control suite for Minecraft serve
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        // Java 21 (LTS) minimum — runs on Java 21, 25, and later releases
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {
@@ -24,7 +25,8 @@ repositories {
 
 dependencies {
     // Paper API - primary target. Spigot-compatible API used throughout.
-    compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
+    // 1.21.4 API — targets 1.21.x; plugin loads on 1.21+ (including 1.26.x)
+    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
 
     // PlaceholderAPI - optional integration
     compileOnly("me.clip:placeholderapi:2.11.5")
@@ -33,7 +35,7 @@ dependencies {
 tasks {
     compileJava {
         options.encoding = "UTF-8"
-        options.release.set(17)
+        options.release.set(21)
     }
 
     processResources {
