@@ -1,0 +1,256 @@
+# ╔══════════════════════════════════════════════════════════╗
+# ║              AzLagControl Configuration                  ║
+# ║    Professional Lag Control Suite for Minecraft          ║
+# ║              by AztrixDigitalStudio                      ║
+# ╚══════════════════════════════════════════════════════════╝
+#
+# Philosophy: Prevention First, Cleanup Second.
+# All modules are independent. Disable any you don't need.
+# Hot-reload supported: /azlag reload
+
+# ─────────────────────────────────────────
+#  CORE
+# ─────────────────────────────────────────
+core:
+  debug: false
+  # Prefix used in all player-facing messages
+  prefix: "&8[&6AzLagControl&8]&r"
+  check-for-updates: true
+
+# ─────────────────────────────────────────
+#  SMART CLEANER
+#  Scheduled + manual entity/item cleanup
+# ─────────────────────────────────────────
+cleaner:
+  enabled: true
+  # Cleanup interval in seconds
+  interval: 300
+  # Countdown warnings before cleanup (seconds before)
+  warn-times:
+    - 60
+    - 30
+    - 10
+    - 5
+    - 3
+    - 2
+    - 1
+  messages:
+    warn: "&e[AzLagControl] &fAutomatic cleanup in &c{time} &fseconds!"
+    done: "&a[AzLagControl] &fCleanup complete! Removed &c{removed} &fentities."
+    manual-done: "&a[AzLagControl] &fManual cleanup complete! Removed &c{removed} &fentities."
+  # What entity categories to remove
+  remove:
+    dropped-items: true
+    arrows: true
+    other-projectiles: true
+    # Mobs (hostile + passive) — aggressive, disabled by default
+    mobs: false
+    # Minecarts, boats
+    vehicles: false
+    # Fireworks, snowballs, etc
+    miscellaneous: true
+  # Protection: entities matching these filters are NEVER removed
+  protect:
+    named: true         # custom name (nametag)
+    tamed: true         # tamed pets
+    leashed: true       # leashed entities
+    passengers: true    # entities riding others
+    bosses: true        # wither, elder guardian, ender dragon
+    from-players: true  # items dropped by players within last N seconds
+    player-drop-grace: 10
+  # Worlds to run cleaner in. Empty = all worlds.
+  worlds: []
+  # Entity types that are always protected
+  protected-types:
+    - WARDEN
+    - ELDER_GUARDIAN
+    - ENDER_DRAGON
+    - WITHER
+
+# ─────────────────────────────────────────
+#  SMART MOB CONTROL
+#  Prevent mob overpopulation per chunk
+# ─────────────────────────────────────────
+mob-control:
+  enabled: true
+  per-chunk:
+    # 0 = unlimited
+    total: 150
+    animals: 40
+    monsters: 80
+    villagers: 20
+    water-creatures: 20
+    ambient: 30
+  # Periodically purge chunks exceeding limits
+  overflow-purge:
+    enabled: true
+    interval: 120
+    protect-named: true
+  # Spawn reasons to monitor (NATURAL, SPAWNER, etc. Empty = all)
+  monitored-reasons: []
+  # Mob types that bypass chunk limits
+  whitelist:
+    - WARDEN
+    - ELDER_GUARDIAN
+    - ENDER_DRAGON
+    - WITHER
+  worlds: []
+
+# ─────────────────────────────────────────
+#  SMART ITEM CONTROL
+#  Ground item management
+# ─────────────────────────────────────────
+item-control:
+  enabled: true
+  # Max dropped items per chunk
+  per-chunk-limit: 200
+  # Merge nearby identical items within this radius (0 = disabled)
+  merge-radius: 2.5
+  # Override item despawn time in ticks (-1 = Minecraft default: 6000)
+  # Useful to speed up despawn in crowded areas
+  lifetime-ticks: -1
+  # Periodic item cleanup interval (seconds)
+  cleanup-interval: 120
+  protect-named: true
+  worlds: []
+
+# ─────────────────────────────────────────
+#  REDSTONE CONTROL
+#  Detect and throttle excessive redstone
+# ─────────────────────────────────────────
+redstone:
+  enabled: true
+  # Max redstone state changes per chunk per second
+  max-updates-per-chunk-per-second: 800
+  # Clock detection: detect blocks firing too frequently
+  clock-detection:
+    enabled: true
+    # Fires N+ times in window-ticks → suspected clock
+    threshold: 60
+    window-ticks: 100
+    # LOG: only log. THROTTLE: cancel excess. ALERT: notify admins
+    action: THROTTLE
+    # Notify admins of detected clocks
+    notify-admins: true
+  worlds: []
+
+# ─────────────────────────────────────────
+#  HOPPER CONTROL
+#  Reduce hopper tick overhead
+# ─────────────────────────────────────────
+hopper:
+  enabled: true
+  # Only allow hopper transfer every N ticks (vanilla = 8)
+  # Higher = less overhead. 16 is safe for most servers.
+  tick-rate: 16
+  # Disable hopper transfers below this TPS (emergency use)
+  disable-below-tps: 0.0
+  # Max hoppers per chunk (0 = unlimited)
+  per-chunk-limit: 0
+  worlds: []
+
+# ─────────────────────────────────────────
+#  EXPLOSION CONTROL
+#  Limit and optimize explosions
+# ─────────────────────────────────────────
+explosion:
+  enabled: true
+  # Max explosions processed per tick
+  max-per-tick: 8
+  # Max TNT entities alive per chunk
+  max-tnt-per-chunk: 25
+  # Reduce explosion block damage (reduces lag on large TNT farms)
+  reduce-block-damage: false
+  creeper:
+    max-per-chunk: 20
+  worlds: []
+
+# ─────────────────────────────────────────
+#  CHUNK CONTROL
+#  Monitor and report chunk health
+# ─────────────────────────────────────────
+chunk-control:
+  enabled: true
+  # Analysis interval in minutes
+  analysis-interval-minutes: 5
+  # Number of worst chunks to track
+  track-top-n: 10
+  # Warn admins if chunk exceeds this entity count
+  alert-entity-threshold: 400
+  worlds: []
+
+# ─────────────────────────────────────────
+#  PERFORMANCE MONITOR
+#  TPS, MSPT, memory tracking
+# ─────────────────────────────────────────
+monitor:
+  enabled: true
+  # How often to sample (ticks)
+  sample-interval-ticks: 20
+  # Samples to keep in history
+  history-size: 600
+  alerts:
+    enabled: true
+    # Alert when TPS drops below these thresholds
+    tps-warning: 18.0
+    tps-critical: 15.0
+    messages:
+      warning: "&e[AzLagControl] &fServer TPS is low: &e{tps} &f(warn threshold: {threshold})"
+      critical: "&c[AzLagControl] &cCRITICAL TPS: &4{tps} &c— consider /azlag emergency on"
+    # Minimum seconds between repeated alerts
+    cooldown-seconds: 60
+
+# ─────────────────────────────────────────
+#  EMERGENCY MODE
+#  Auto-activates on severe TPS drops
+# ─────────────────────────────────────────
+emergency:
+  enabled: true
+  # Auto-activate when TPS drops below this for stability-check-ticks
+  auto-activate-tps: 13.0
+  # Auto-deactivate when TPS stays above this for stability-duration-seconds
+  auto-deactivate-tps: 17.0
+  stability-duration-seconds: 30
+  # How often to check TPS for auto-trigger (seconds)
+  check-interval-seconds: 5
+  actions:
+    # Reduce view distance temporarily
+    reduce-view-distance:
+      enabled: true
+      target: 6
+    # Cancel all mob spawns
+    disable-mob-spawning: true
+    # Aggressive entity purge every N seconds
+    aggressive-entity-purge:
+      enabled: true
+      interval-seconds: 20
+    # Kill all TNT entities
+    remove-tnt: true
+    # Disable hopper transfers (very aggressive)
+    disable-hoppers: false
+  messages:
+    activate: "&c[AzLagControl] &4EMERGENCY MODE ACTIVATED &c— TPS: &4{tps}"
+    deactivate: "&a[AzLagControl] &aEmergency mode deactivated. TPS stable: &2{tps}"
+    manual-activate: "&c[AzLagControl] &4Emergency mode manually activated by &c{player}"
+    manual-deactivate: "&a[AzLagControl] &aEmergency mode manually deactivated by &2{player}"
+
+# ─────────────────────────────────────────
+#  ANALYTICS
+#  Historical performance data
+# ─────────────────────────────────────────
+analytics:
+  enabled: true
+  # Keep this many minutes of samples
+  history-minutes: 60
+  # Write performance snapshots to file
+  log-to-file: false
+  log-file: "plugins/AzLagControl/performance.log"
+
+# ─────────────────────────────────────────
+#  INTEGRATIONS
+# ─────────────────────────────────────────
+integrations:
+  placeholder-api:
+    enabled: true
+  spark:
+    enabled: true

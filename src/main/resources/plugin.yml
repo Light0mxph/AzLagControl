@@ -1,0 +1,58 @@
+name: AzLagControl
+version: '${version}'
+main: dev.azlagcontrol.AzLagControl
+api-version: '1.20'
+description: '${description}'
+authors:
+  - AztrixDigitalStudio
+website: https://github.com/AztrixDigitalStudio/AzLagControl
+
+# Optional integrations. softdepend guarantees AzLagControl loads AFTER these
+# (when present) so the PlaceholderAPI expansion registers reliably.
+# The plugin runs fully without any of them.
+softdepend:
+  - PlaceholderAPI
+  - spark
+
+commands:
+  azlagcontrol:
+    description: AzLagControl main command
+    aliases:
+      - azlag
+      - alc
+    permission: azlagcontrol.use
+    usage: /azlag <subcommand>
+
+permissions:
+  azlagcontrol.admin:
+    description: Full administrative access to AzLagControl
+    default: op
+    children:
+      azlagcontrol.reload: true
+      azlagcontrol.stats: true
+      azlagcontrol.cleanup: true
+      azlagcontrol.emergency: true
+      azlagcontrol.diagnose: true
+      azlagcontrol.profiler: true
+      azlagcontrol.use: true
+  azlagcontrol.reload:
+    description: Reload plugin configuration
+    default: op
+  azlagcontrol.stats:
+    description: View server performance statistics
+    default: op
+  azlagcontrol.cleanup:
+    description: Trigger manual entity/item cleanup
+    default: op
+  azlagcontrol.emergency:
+    description: Activate or deactivate emergency mode
+    default: op
+  azlagcontrol.diagnose:
+    description: Run server diagnostics
+    default: op
+  azlagcontrol.profiler:
+    description: Access the performance profiler
+    default: op
+  azlagcontrol.use:
+    description: Basic command access (stats, tps)
+    default: op
