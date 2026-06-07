@@ -22,7 +22,6 @@ public final class PerformanceMonitorModule extends AbstractModule {
 
     // Config
     private int sampleIntervalTicks;
-    private int historySize;
     private boolean alertsEnabled;
     private double tpsWarning;
     private double tpsCritical;
@@ -50,7 +49,6 @@ public final class PerformanceMonitorModule extends AbstractModule {
     @Override
     public void loadConfig() {
         sampleIntervalTicks = cfg("sample-interval-ticks", 20);
-        historySize         = cfg("history-size", 600);
         alertsEnabled       = cfg("alerts.enabled", true);
         tpsWarning          = cfg("alerts.tps-warning", 18.0);
         tpsCritical         = cfg("alerts.tps-critical", 15.0);
@@ -87,10 +85,14 @@ public final class PerformanceMonitorModule extends AbstractModule {
         // Admin alerts
         if (alertsEnabled) checkAlerts(tps);
 
-        plugin.debug("TPS=" + String.format("%.2f", tps)
-                + " MSPT=" + String.format("%.2f", TpsUtil.getMSPT()) + "ms"
-                + " Entities=" + ServerUtil.totalEntityCount()
-                + " Chunks=" + ServerUtil.totalLoadedChunks());
+        // Guard the debug payload: totalLoadedChunks() allocates a Chunk[] of every
+        // loaded chunk, and the string is built eagerly. Skip it all when debug is off.
+        if (plugin.getConfigManager().isDebug()) {
+            plugin.debug("TPS=" + String.format("%.2f", tps)
+                    + " MSPT=" + String.format("%.2f", TpsUtil.getMSPT()) + "ms"
+                    + " Entities=" + ServerUtil.totalEntityCount()
+                    + " Chunks=" + ServerUtil.totalLoadedChunks());
+        }
     }
 
     private void checkAlerts(double tps) {

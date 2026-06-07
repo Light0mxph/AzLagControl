@@ -36,6 +36,9 @@ public final class HopperControlModule extends AbstractModule implements Listene
     private final Map<Long, Long> lastTransferTick = new HashMap<>();
     private long currentTick = 0L;
     private boolean forceDisabled = false;
+    // Set by EmergencyModeModule. Independent of the TPS-driven forceDisabled flag
+    // so the two cannot clobber each other.
+    private boolean emergencyDisabled = false;
 
     public HopperControlModule(AzLagControl plugin) {
         super(plugin);
@@ -103,7 +106,7 @@ public final class HopperControlModule extends AbstractModule implements Listene
 
         if (!isWorldEnabled(block.getWorld())) return;
 
-        if (forceDisabled) {
+        if (forceDisabled || emergencyDisabled) {
             event.setCancelled(true);
             return;
         }
@@ -123,6 +126,10 @@ public final class HopperControlModule extends AbstractModule implements Listene
         lastTransferTick.entrySet().removeIf(e -> (currentTick - e.getValue()) > 1200L);
     }
 
+    /** Toggled by Emergency Mode to halt all hopper transfers while active. */
+    public void setEmergencyDisabled(boolean disabled) { this.emergencyDisabled = disabled; }
+
     public boolean isForceDisabled() { return forceDisabled; }
+    public boolean isEmergencyDisabled() { return emergencyDisabled; }
     public int getTickRate() { return tickRate; }
 }

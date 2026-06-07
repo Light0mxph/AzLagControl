@@ -3,7 +3,9 @@ package dev.azlagcontrol.module.emergency;
 import dev.azlagcontrol.AzLagControl;
 import dev.azlagcontrol.event.AzEmergencyModeChangeEvent;
 import dev.azlagcontrol.module.base.AbstractModule;
+import dev.azlagcontrol.module.hopper.HopperControlModule;
 import dev.azlagcontrol.scheduler.TaskScheduler;
+import dev.azlagcontrol.util.EntityUtil;
 import dev.azlagcontrol.util.ServerUtil;
 import dev.azlagcontrol.util.TpsUtil;
 import org.bukkit.Bukkit;
@@ -180,6 +182,8 @@ public final class EmergencyModeModule extends AbstractModule implements Listene
 
         if (removeTnt) removeTntEntities();
 
+        if (disableHoppers) toggleHoppers(true);
+
         if (aggressivePurge) {
             long periodTicks = purgeIntervalSeconds * 20L;
             purgeTask = scheduler.runTimer(this::aggressivePurge, periodTicks, periodTicks);
@@ -188,6 +192,18 @@ public final class EmergencyModeModule extends AbstractModule implements Listene
 
     private void restoreMeasures() {
         if (reduceViewDistance) restoreViewDistances();
+        if (disableHoppers) toggleHoppers(false);
+    }
+
+    /** Halts/restores hopper transfers via the Hopper Control module, if loaded. */
+    private void toggleHoppers(boolean disabled) {
+        HopperControlModule hopper = plugin.getModuleManager().get(HopperControlModule.class);
+        if (hopper == null || !hopper.isLoaded()) {
+            logWarn("disable-hoppers requested but Hopper Control module is not loaded — skipping.");
+            return;
+        }
+        hopper.setEmergencyDisabled(disabled);
+        logInfo("Hopper transfers " + (disabled ? "disabled" : "re-enabled") + " (emergency).");
     }
 
     private void applyViewDistance(int distance) {
@@ -234,20 +250,13 @@ public final class EmergencyModeModule extends AbstractModule implements Listene
                 if (e instanceof Player) continue;
                 if (e instanceof Item || e instanceof Arrow
                         || (e instanceof Mob && !(e instanceof Tameable t && t.isTamed())
-                            && e.getCustomName() == null && !EntityUtil_isBoss(e))) {
+                            && e.getCustomName() == null && !EntityUtil.isBoss(e))) {
                     e.remove();
                     removed++;
                 }
             }
         }
         logInfo("Emergency purge: removed " + removed + " entities.");
-    }
-
-    // Inline boss check to avoid import from EntityUtil (would create coupling)
-    private boolean EntityUtil_isBoss(Entity e) {
-        EntityType t = e.getType();
-        return t == EntityType.ENDER_DRAGON || t == EntityType.WITHER
-                || t == EntityType.ELDER_GUARDIAN || t == EntityType.WARDEN;
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)

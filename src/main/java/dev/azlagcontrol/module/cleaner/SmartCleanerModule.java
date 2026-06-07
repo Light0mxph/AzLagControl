@@ -53,8 +53,11 @@ public final class SmartCleanerModule extends AbstractModule {
     private BukkitTask countdownTask;
     private PlayerDropListener dropListener;
 
-    // Track when items were dropped by players (entity UUID → drop time ms)
-    private final Map<UUID, Long> playerDropTimes = new WeakHashMap<>();
+    // Track when items were dropped by players (entity UUID → drop time ms).
+    // NOTE: must NOT be a WeakHashMap — the UUID keys would have no strong
+    // reference and get GC'd almost immediately, silently dropping the grace
+    // protection. Bounded instead by time-pruning on every cleanup sweep.
+    private final Map<UUID, Long> playerDropTimes = new HashMap<>();
 
     public SmartCleanerModule(AzLagControl plugin) {
         super(plugin);
@@ -149,6 +152,9 @@ public final class SmartCleanerModule extends AbstractModule {
     public int performCleanup(boolean manual) {
         long graceMs = playerDropGrace * 1000L;
         long now = System.currentTimeMillis();
+
+        // Prune expired drop-time entries so the map stays bounded.
+        playerDropTimes.entrySet().removeIf(e -> (now - e.getValue()) > graceMs);
 
         int removed = 0;
         List<World> worlds = new ArrayList<>();

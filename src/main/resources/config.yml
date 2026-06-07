@@ -137,9 +137,13 @@ redstone:
 # ─────────────────────────────────────────
 #  HOPPER CONTROL
 #  Reduce hopper tick overhead
+#  NOTE: Paper already throttles hoppers natively (paper-world-defaults.yml →
+#  hopper.disable-move-event / ticks-per.hopper-transfer). This module is a
+#  redundant fallback for Spigot. Disabled by default — enable only on Spigot
+#  or if you need per-chunk hopper limits Paper doesn't provide.
 # ─────────────────────────────────────────
 hopper:
-  enabled: true
+  enabled: false
   # Only allow hopper transfer every N ticks (vanilla = 8)
   # Higher = less overhead. 16 is safe for most servers.
   tick-rate: 16
@@ -187,8 +191,6 @@ monitor:
   enabled: true
   # How often to sample (ticks)
   sample-interval-ticks: 20
-  # Samples to keep in history
-  history-size: 600
   alerts:
     enabled: true
     # Alert when TPS drops below these thresholds

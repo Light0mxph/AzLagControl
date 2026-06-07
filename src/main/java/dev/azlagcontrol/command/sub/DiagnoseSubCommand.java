@@ -33,8 +33,11 @@ public final class DiagnoseSubCommand implements SubCommand {
 
         // Server environment
         TextUtil.sendRaw(sender, " &fServer: &e" + Bukkit.getName() + " " + Bukkit.getVersion());
+        // Folia is detected for info only — AzLagControl uses the global Bukkit
+        // scheduler + unsynchronized maps, so it is NOT Folia-safe. Flag it loudly.
         TextUtil.sendRaw(sender, " &fPaper: &e" + ServerUtil.isPaper()
-                + "  &fFolia: &e" + ServerUtil.isFolia());
+                + "  &fFolia: &e" + ServerUtil.isFolia()
+                + (ServerUtil.isFolia() ? " &c(NOT SUPPORTED — run Paper)" : ""));
         TextUtil.sendRaw(sender, " &fJava: &e" + System.getProperty("java.version"));
 
         // Current metrics

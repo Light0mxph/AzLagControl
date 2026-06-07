@@ -88,9 +88,19 @@ public final class ExplosionControlModule extends AbstractModule implements List
         // Check per-chunk TNT limit
         if (event.getEntity() instanceof TNTPrimed) {
             Chunk chunk = event.getEntity().getLocation().getChunk();
-            if (maxTntPerChunk > 0 && countTntInChunk(chunk) >= maxTntPerChunk) {
+            if (maxTntPerChunk > 0 && countInChunk(chunk, TNTPrimed.class) >= maxTntPerChunk) {
                 event.setCancelled(true);
                 debug("Cancelled TNT explosion (over chunk limit)");
+                return;
+            }
+        }
+
+        // Check per-chunk creeper limit
+        if (event.getEntity() instanceof Creeper) {
+            Chunk chunk = event.getEntity().getLocation().getChunk();
+            if (maxCreeperPerChunk > 0 && countInChunk(chunk, Creeper.class) >= maxCreeperPerChunk) {
+                event.setCancelled(true);
+                debug("Cancelled creeper explosion (over chunk limit)");
                 return;
             }
         }
@@ -114,11 +124,11 @@ public final class ExplosionControlModule extends AbstractModule implements List
         }
     }
 
-    private int countTntInChunk(Chunk chunk) {
+    private int countInChunk(Chunk chunk, Class<? extends Entity> type) {
         if (!chunk.isLoaded()) return 0;
         int count = 0;
         for (Entity e : chunk.getEntities()) {
-            if (e instanceof TNTPrimed) count++;
+            if (type.isInstance(e)) count++;
         }
         return count;
     }

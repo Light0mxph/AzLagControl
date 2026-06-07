@@ -5,8 +5,8 @@ import dev.azlagcontrol.module.base.AbstractModule;
 import dev.azlagcontrol.scheduler.TaskScheduler;
 import dev.azlagcontrol.util.BlockKey;
 import dev.azlagcontrol.util.ServerUtil;
-import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -42,10 +42,11 @@ public final class RedstoneControlModule extends AbstractModule implements Liste
     // State: chunk key → update count this second
     private final Map<Long, AtomicInteger> chunkUpdateCounts = new HashMap<>();
     // State: block key → [fireCount, windowStart ticks]
-    private final Map<Long, int[]> blockFireHistory = new HashMap<>();
+    private final Map<Long, long[]> blockFireHistory = new HashMap<>();
 
-    // Ticks since server start (reset on overflow)
-    private int currentTick = 0;
+    // Ticks since server start. long so it never overflows (int would wrap
+    // after ~3.4y of uptime and corrupt the elapsed-window math).
+    private long currentTick = 0L;
 
     public RedstoneControlModule(AzLagControl plugin) {
         super(plugin);
@@ -115,22 +116,28 @@ public final class RedstoneControlModule extends AbstractModule implements Liste
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onBlockPhysics(BlockPhysicsEvent event) {
-        if (!isWorldEnabled(event.getBlock().getWorld())) return;
+        // BlockPhysicsEvent is the single highest-frequency event in the game.
+        // If we aren't throttling, this handler can only waste CPU — bail before
+        // any map lookup or allocation.
+        if (action != Action.THROTTLE || maxUpdatesPerChunkPerSecond <= 0) return;
 
-        long chunkKey = BlockKey.chunk(event.getBlock().getLocation());
+        Block block = event.getBlock();
+        if (!isWorldEnabled(block.getWorld())) return;
+
+        // Use block coords directly — no Location object allocated per event.
+        long chunkKey = BlockKey.chunk(block.getWorld(), block.getX(), block.getZ());
         AtomicInteger count = chunkUpdateCounts.computeIfAbsent(chunkKey, k -> new AtomicInteger(0));
-        int updates = count.incrementAndGet();
 
-        if (action == Action.THROTTLE && updates > maxUpdatesPerChunkPerSecond) {
+        if (count.incrementAndGet() > maxUpdatesPerChunkPerSecond) {
             event.setCancelled(true);
         }
     }
 
     private void detectClock(Location loc, int chunkUpdates) {
         long blockKey = BlockKey.block(loc);
-        int[] history = blockFireHistory.computeIfAbsent(blockKey, k -> new int[]{0, currentTick});
+        long[] history = blockFireHistory.computeIfAbsent(blockKey, k -> new long[]{0L, currentTick});
 
-        int elapsed = currentTick - history[1];
+        long elapsed = currentTick - history[1];
         if (elapsed > clockWindowTicks) {
             // Reset window
             history[0] = 1;
@@ -145,7 +152,7 @@ public final class RedstoneControlModule extends AbstractModule implements Liste
         }
     }
 
-    private void handleClockDetection(Location loc, int fireCount) {
+    private void handleClockDetection(Location loc, long fireCount) {
         String worldName = loc.getWorld().getName();
         String blockPos = loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
 

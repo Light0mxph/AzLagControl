@@ -49,10 +49,10 @@ public final class EntityUtil {
                 || entity instanceof Phantom;
     }
 
-    /** Returns true if entity is a passive/neutral animal. */
+    /** Returns true if entity is a passive/neutral animal. Ambient mobs (bats)
+     *  are tracked separately under the ambient limit, not here. */
     public static boolean isAnimal(Entity entity) {
-        return entity instanceof Animals || entity instanceof Golem
-                || entity instanceof Ambient;
+        return entity instanceof Animals || entity instanceof Golem;
     }
 
     /** Returns true if entity is a villager-type entity. */
@@ -74,7 +74,9 @@ public final class EntityUtil {
         for (Entity e : entities) {
             if (!e.isValid()) continue;
             total++;
-            if (e instanceof Monster || e instanceof Ghast || e instanceof Slime) monsters++;
+            // Mirror isMonster(): MagmaCube extends Slime, Phantom does not.
+            if (e instanceof Monster || e instanceof Ghast || e instanceof Slime
+                    || e instanceof Phantom) monsters++;
             else if (e instanceof Animals || e instanceof Golem) animals++;
             else if (e instanceof AbstractVillager) villagers++;
             else if (e instanceof WaterMob) water++;

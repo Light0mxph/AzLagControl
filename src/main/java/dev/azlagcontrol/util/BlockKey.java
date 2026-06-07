@@ -1,6 +1,7 @@
 package dev.azlagcontrol.util;
 
 import org.bukkit.Location;
+import org.bukkit.World;
 
 /**
  * Packs block / chunk coordinates into a single long for use as HashMap keys.
@@ -18,20 +19,30 @@ public final class BlockKey {
 
     /** Packs a block location (world-aware) into a long. */
     public static long block(Location loc) {
-        long x = loc.getBlockX() & 0x3FFFFFFL;   // 26 bits
-        long z = loc.getBlockZ() & 0x3FFFFFFL;   // 26 bits
-        long y = (loc.getBlockY() + 2048L) & 0xFFFL; // 12 bits, offset for negative Y
+        return block(loc.getWorld(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+    }
+
+    /** Packs block coords directly (world-aware) — avoids Location allocation in hot paths. */
+    public static long block(World world, int bx, int by, int bz) {
+        long x = bx & 0x3FFFFFFL;   // 26 bits
+        long z = bz & 0x3FFFFFFL;   // 26 bits
+        long y = (by + 2048L) & 0xFFFL; // 12 bits, offset for negative Y
         long packed = (x << 38) | (z << 12) | y;
         // Fold world identity into the high bits without losing block precision:
         // XOR a stable world hash into the result. Collisions remain negligible.
-        return packed ^ ((long) loc.getWorld().getUID().hashCode() << 40);
+        return packed ^ ((long) world.getUID().hashCode() << 40);
     }
 
     /** Packs a chunk coordinate (world-aware) into a long. */
     public static long chunk(Location loc) {
-        long cx = (loc.getBlockX() >> 4) & 0xFFFFFFFFL;
-        long cz = (loc.getBlockZ() >> 4) & 0xFFFFFFFFL;
+        return chunk(loc.getWorld(), loc.getBlockX(), loc.getBlockZ());
+    }
+
+    /** Packs a chunk coordinate from block coords directly — avoids Location allocation. */
+    public static long chunk(World world, int bx, int bz) {
+        long cx = (bx >> 4) & 0xFFFFFFFFL;
+        long cz = (bz >> 4) & 0xFFFFFFFFL;
         long packed = (cx << 32) | cz;
-        return packed ^ ((long) loc.getWorld().getUID().hashCode() << 16);
+        return packed ^ ((long) world.getUID().hashCode() << 16);
     }
 }

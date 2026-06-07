@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "dev.azlagcontrol"
-version = "1.0.0"
+version = "1.1.0"
 description = "AzLagControl - Professional lag control suite for Minecraft servers by AztrixDigitalStudio"
 
 java {
